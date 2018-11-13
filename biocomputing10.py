@@ -21,7 +21,7 @@ def nllikequadratic(p,obs):
     B2=p[2]
     sigma=p[3]
     
-    expected=B0+B1*obs.x+B2**obs.x
+    expected=B0+B1*obs.x+B2*obs.x*obs.x
     nllquadratic=-1*norm(expected,sigma).logpdf(obs.y).sum()
     return nllquadratic
 
@@ -49,6 +49,40 @@ def nllikelinear(p,obs):
 
 #which model is more appropriate
 from scipy import stats
-teststat=2*(fitquadratic.fun-fitlinear.fun)
-df=len(fitquadratic.x)-len(fitquadratic.x)
+teststat=2.0*(fitquadratic.fun-fitlinear.fun)
+df=(len(fitquadratic.x)-len(fitlinear.x))/1.0
 1-stats.chi2.cdf(teststat,df)
+
+#2
+import scipy
+import scipy.integrate as spint
+
+def ddSim (y,t0,r,a):
+    N1=y[0]
+    N2=y[1]
+    R1=r[0]
+    R2=r[1]
+    a11=a[0]
+    a12=a[1]
+    a21=a[2]
+    a22=a[3]
+    dN1dt=R1*(1-N1*a11-N2*a12)*N1
+    dN2dt=R2*(1-N2*a22-N1*a21)*N2
+    
+    return [dN1dt,dN2dt]
+
+#model simulation 1 a12<a11, a21<a22
+params=([.05,.05],[.01,.005,.003,.02])
+N0=[0.01,0.01]
+times=range(0,600)
+
+modelSim=spint.odeint(func=ddSim,y0=N0,t=times,args=params)
+modelOutput=pandas.DataFrame({"t":times, "N1": modelSim2[:,0], "N2": modelSim2[:,1]})
+ggplot(modelOutput)+geom_line(aes(x="t", y="N1"), color="red")+geom_line(aes(x="t", y="N2"), color="blue")
+
+#model simulation 2 a12>a11, a21<a22
+params=([.05,.05],[.1,3,.003,.02])
+N0=[0.01,0.01]
+times=range(0,600)
+
+    
